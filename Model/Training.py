@@ -465,7 +465,8 @@ def KD_online_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_c
             #if val_accuracy.avg > best_val_acc or (epoch_idx+1)%10==0 or val_kappa.avg > best_val_kappa:
             if val_s_accuracy.avg > best_val_acc or val_s_kappa.avg > best_val_kappa:
                 if val_s_accuracy.avg > best_val_acc:
-                    run['model/bestmodel_acc'].log(epoch_idx+1)
+                    if args.is_neptune:
+                        run['model/bestmodel_acc'].log(epoch_idx+1)
                     best_val_acc = val_s_accuracy.avg
                     print("================================================================================================")
                     print("                                          Saving Best Model (ACC)                                     ")
@@ -474,13 +475,14 @@ def KD_online_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_c
                     torch.save(Net_s, f'{args.project_path}/model_check_points/student_checkpoint_acc.pth.tar')
 
                 if val_s_kappa.avg > best_val_kappa:
-                    run['model/bestmodel_kappa'].log(epoch_idx+1)
+                    if args.is_neptune:
+                        run['model/bestmodel_kappa'].log(epoch_idx+1)
                     best_val_kappa = val_s_kappa.avg
                     print("================================================================================================")
                     print("                                          Saving Best Model (Kappa)                                    ")
                     print("================================================================================================")
-                    torch.save(Net_t, f'{args.project_path}/model_check_points//teacher_checkpoint_kappa.pth.tar')
-                    torch.save(Net_s, f'{args.project_path}/model_check_points//student_checkpoint_kappa.pth.tar')
+                    torch.save(Net_t, f'{args.project_path}/model_check_points/teacher_checkpoint_kappa.pth.tar')
+                    torch.save(Net_s, f'{args.project_path}/model_check_points/student_checkpoint_kappa.pth.tar')
 
                 if args.is_neptune:
                     run['model/best_acc'].log(val_s_accuracy.avg)
