@@ -1,20 +1,16 @@
 import copy
-from typing import Optional, Any
-
+import math
 import torch
 from torch import Tensor
 import torch.nn as nn
 from torch.nn import functional as F
-from torch.nn import Module
 from torch.nn import MultiheadAttention
 from torch.nn import ModuleList
-from torch.nn.init import xavier_uniform_
 from torch.nn import Dropout
 from torch.nn import Linear
 from torch.nn import LayerNorm
-!pip install einops
-from einops import rearrange, reduce, repeat
-from einops.layers.torch import Rearrange, Reduce
+from einops import repeat
+from einops.layers.torch import Rearrange
 
 def _get_clones(module, N):
     return ModuleList([copy.deepcopy(module) for i in range(N)])

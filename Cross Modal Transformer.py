@@ -24,7 +24,6 @@ from torch.utils import data
 # import cv2
 import math
 from PIL import Image
-!pip install einops
 from einops import rearrange, reduce, repeat
 from einops.layers.torch import Rearrange, Reduce
 from torch.utils.data import Dataset, DataLoader
@@ -37,10 +36,10 @@ from sklearn.decomposition import FastICA, PCA
 from scipy.signal import butter, lfilter
 from scipy.signal import freqz
 
-from google.colab import drive
-drive.mount('/content/drive',force_remount=True)
+# from google.colab import drive
+# drive.mount('/content/drive',force_remount=True)
 
-cd '/content/drive/MyDrive/EarEEG'
+# cd '/content/drive/MyDrive/EarEEG'
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 device

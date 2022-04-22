@@ -1,5 +1,7 @@
-from torch.autograd import Variable
+
 from sklearn.metrics import cohen_kappa_score
+import torch
+import matplotlib.pyplot as plt
 
 def accuracy(outputs, labels):
     # m = nn.Softmax(dim=1) #########
@@ -26,7 +28,7 @@ def g_mean(sensitivity, specificity):
 
 
 
-def confusion_matrix(output, label, n_classes, batch_size, print_conf_mat = False):
+def confusion_matrix(output, label, n_classes, batch_size):
     # m = nn.Softmax(dim=1) #########
     # output = m(output)   ########
     preds = torch.argmax(output, 1)
@@ -44,28 +46,6 @@ def confusion_matrix(output, label, n_classes, batch_size, print_conf_mat = Fals
 
     for p, t in zip(preds, label):
         conf_matrix[p, t] += 1
-    if print_conf_mat==True:    ##Jathu made this edit
-        print(conf_matrix)
-
-        plot_confusion_matrix(cm = conf_matrix.cpu().numpy(),
-                      normalize    = True,
-                      target_names = ['Wake', 'N1', 'N2','N3','REM'],
-                      title        = "Confusion Matrix (5-Class)")
-        plt.figure(figsize=(8, 6))
-        plt.imshow(conf_matrix, interpolation='nearest', cmap=plt.get_cmap('Blues'))
-        plt.title('Confusion Matrix')
-        plt.colorbar()
-        fig, ax = plt.subplots(figsize=(7.5, 7.5))
-        ax.matshow(conf_matrix, cmap=plt.get_cmap('Blues'), alpha=1)
-        for i in range(conf_matrix.shape[0]):
-            for j in range(conf_matrix.shape[1]):
-                ax.text(x=j, y=i,s=int(conf_matrix[i, j]), va='center', ha='center', size='xx-large')
- 
-        plt.xlabel('Prediction', fontsize=18)
-        plt.ylabel('Ground Truth', fontsize=18)
-        plt.title('Confusion Matrix', fontsize=18)
-        plt.colorbar()
-        plt.show()
 
     TP = conf_matrix.diag()
     for c in range(n_classes):
