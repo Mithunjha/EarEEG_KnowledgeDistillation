@@ -512,8 +512,9 @@ def KD_offline_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_
         run['model/model_architecture'] = Net_t
     best_val_acc = 0
     best_val_kappa = 0
+
     for epoch_idx in range(args.n_epochs):  # loop over the dataset multiple times
-        run['train/epoch/learning_Rate'].log(optimizer_s.param_groups[0]["lr"]) 
+        
         Net_s.train()
         Net_t.eval()        ### Check whether weights of the teacher gets updated
         print(f'===========================================================Training Epoch : [{epoch_idx+1}/{args.n_epochs}] ===========================================================================================================>')
@@ -756,7 +757,8 @@ def KD_offline_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_
             #if val_accuracy.avg > best_val_acc or (epoch_idx+1)%10==0 or val_kappa.avg > best_val_kappa:
             if val_accuracy.avg > best_val_acc or val_kappa.avg > best_val_kappa:
                 if val_accuracy.avg > best_val_acc:
-                    run['model/bestmodel_acc'].log(epoch_idx+1)
+                    if args.is_neptune:
+                        run['model/bestmodel_acc'].log(epoch_idx+1)
                     best_val_acc = val_accuracy.avg
                     print("================================================================================================")
                     print("                                          Saving Best Model (ACC)                                     ")
@@ -764,7 +766,8 @@ def KD_offline_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_
                     torch.save(Net_s, f'{args.project_path}/model_check_points/student_checkpoint_acc.pth.tar')
 
                 if val_kappa.avg > best_val_kappa:
-                    run['model/bestmodel_kappa'].log(epoch_idx+1)
+                    if args.is_neptune:
+                        run['model/bestmodel_kappa'].log(epoch_idx+1)
                     best_val_kappa = val_kappa.avg
                     print("================================================================================================")
                     print("                                          Saving Best Model (Kappa)                                    ")

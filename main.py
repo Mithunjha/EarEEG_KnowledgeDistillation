@@ -111,8 +111,8 @@ def main():
 
 
             if args.is_teacher_pretrain:
-                print(f"Loading previous model from {args.student_model_path} for teacher model")
-                Net_s = torch.load(f"{args.student_model_path}").to(device)
+                print(f"Loading previous model from {args.model_path} for teacher model")
+                Net_s = torch.load(f"{args.model_path}").to(device)
             else:
                 print(f"Initializing teacher model")
                 Net_t = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward=args.dim_feedforward, window_size = args.window_size).to(device)
