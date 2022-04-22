@@ -1,4 +1,3 @@
-
 from sklearn.metrics import cohen_kappa_score
 import torch
 import matplotlib.pyplot as plt
@@ -28,12 +27,8 @@ def g_mean(sensitivity, specificity):
 
 
 
-def confusion_matrix(output, label, n_classes, batch_size):
-    # m = nn.Softmax(dim=1) #########
-    # output = m(output)   ########
+def confusion_matrix(output, label, n_classes, batch_size,print_conf_mat=False):
     preds = torch.argmax(output, 1)
-    # print(preds)
-    # print(label)
     conf_matrix = torch.zeros(n_classes, n_classes)
     avg_sensitivity = 0
     avg_specificity = 0
@@ -46,6 +41,16 @@ def confusion_matrix(output, label, n_classes, batch_size):
 
     for p, t in zip(preds, label):
         conf_matrix[p, t] += 1
+
+    if print_conf_mat==True:    ##Jathu made this edit
+      print(conf_matrix)
+
+      plot_confusion_matrix(cm = conf_matrix.cpu().numpy(),
+                      normalize    = True,
+                      target_names = ['Wake', 'N1', 'N2','N3','REM'],
+                      title        = "Confusion Matrix (5-Class)")
+
+      plt.show()
 
     TP = conf_matrix.diag()
     for c in range(n_classes):
@@ -87,3 +92,51 @@ def confusion_matrix(output, label, n_classes, batch_size):
         avg_precision +=float(precision)
 
     return sens_list, spec_list,F1_list, precision_list, avg_sensitivity/5, avg_specificity/5, avg_F1_score/5, avg_precision/5 
+
+
+def plot_confusion_matrix(cm,
+                          target_names,
+                          title='Confusion matrix',
+                          cmap=None,
+                          normalize=True):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import itertools
+
+    accuracy = np.trace(cm) / float(np.sum(cm))
+    misclass = 1 - accuracy
+
+    if cmap is None:
+        cmap = plt.get_cmap('Blues')
+    if normalize:
+        cm2 = cm.astype('float') / cm.sum(axis=0)#[:, np.newaxis]
+    print(cm2)
+    plt.figure(figsize=(8, 6))
+    plt.imshow(np.transpose(cm2*100), interpolation='nearest', cmap=cmap,vmin =-5 ,vmax =80)
+    plt.title(title,fontsize = 20)
+    # plt.colorbar()
+
+    if target_names is not None:
+        tick_marks = np.arange(len(target_names))
+        plt.xticks(tick_marks, target_names, rotation=45, fontsize = 15)
+        plt.yticks(tick_marks, target_names,fontsize = 15)
+
+    
+
+
+    thresh = 500#cm.max() / 4 if normalize else cm.max() / 4
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        if normalize:
+            plt.text(i, j, "{:,}\n{:0.2f}%".format(int(cm[i, j]),cm2[i, j]*100),
+                     horizontalalignment="center", verticalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black", fontsize = 13)
+        else:
+            plt.text(i, j, "{:,}".format(cm[i, j]),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black")
+
+
+    plt.tight_layout()
+    plt.ylabel('True label',fontsize = 18)
+    plt.xlabel('Predictions',fontsize = 18)#\naccuracy={:0.4f}; misclass={:0.4f}'.format(accuracy, misclass))
+    plt.show()

@@ -1,5 +1,5 @@
 
-from Datasets.EarEEG_utils import EEG_process, read_h5py
+from Datasets.EarEEG_utils import EEG_process, read_h5py,split_data
 import numpy as np
 import torch
 from torch.utils.data import Dataset
@@ -7,7 +7,6 @@ from torchvision import transforms
 from torch.utils import data
 import glob
 
-from Datasets.EarEEG_utils import split_data
 
 class EarEEG_MultiChan_Dataset(Dataset):
     def __init__(self, psg_file, label_file,args, device, mean_l = None, sd_l = None,reject_list = None, transform=None, target_transform=None, sub_wise_norm = False):
