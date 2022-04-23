@@ -17,7 +17,7 @@ def parse_option():
     parser.add_argument('--batch_size', type=int, default = 32 ,  help='Batch Size')
     parser.add_argument('--val_data_list', nargs="+", default = [8] ,  help='Folds in the dataset for validation')
     parser.add_argument('--signals', type=str, default = 'ear-eeg'  ,choices=['ear-eeg', 'scalp-eeg'],  help='signal type')
-    parser.add_argument('--data_path', type=str, default='F:/Ear_EEG',help='Path to the dataset file')
+    parser.add_argument('--data_path', type=str, default='',help='Path to the dataset file')
     opt = parser.parse_args()
     return opt
 
@@ -26,7 +26,7 @@ def main():
     warnings.filterwarnings("ignore")
     args = parse_option()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(device)
+    print(f"Device : {device}")
     first_main = 0
     test_model = torch.load(f'{args.model_path}')
     print(f"Test Model Loaded :  {args.model_path}")

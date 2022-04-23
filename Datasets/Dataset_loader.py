@@ -18,8 +18,8 @@ class EarEEG_MultiChan_Dataset(Dataset):
             if i == 0:
                 if reject_list.any():
                     psg_signal = read_h5py(psg_file[i])
+                    L_R, L_E, R_E = EEG_process(psg_signal,reject_list,i=i)
                     if args.signals == 'ear-eeg':
-                      L_R, L_E, R_E = EEG_process(psg_signal,reject_list,i=i)
                       L_R = np.reshape(L_R,(L_R.shape[0],1,L_R.shape[1]))
                       L_E = np.reshape(L_E,(L_E.shape[0],1,L_E.shape[1]))
                       R_E = np.reshape(R_E,(R_E.shape[0],1,R_E.shape[1]))
@@ -38,8 +38,8 @@ class EarEEG_MultiChan_Dataset(Dataset):
             else:
                 if reject_list.any():
                     psg_signal = read_h5py(psg_file[i])
+                    L_R, L_E, R_E = EEG_process(psg_signal,reject_list,i=i)
                     if args.signals == 'ear-eeg':
-                      L_R, L_E, R_E = EEG_process(psg_signal,reject_list,i=i)
                       L_R = np.reshape(L_R,(L_R.shape[0],1,L_R.shape[1]))
                       L_E = np.reshape(L_E,(L_E.shape[0],1,L_E.shape[1]))
                       R_E = np.reshape(R_E,(R_E.shape[0],1,R_E.shape[1]))
@@ -206,6 +206,11 @@ class EarEEG_KD_Dataset(Dataset):
 
 
 def get_dataset(args,device):
+  args.train_data_list = list(args.train_data_list[0])
+  args.train_data_list = [ int(x) for x in args.train_data_list if x.isdigit() ]
+  args.val_data_list = list(args.val_data_list[0])
+  args.val_data_list = [ int(x) for x in args.val_data_list if x.isdigit() ]
+  
   psg_sig_list = glob.glob(f'{args.data_path}/x*.h5')
   psg_sig_list.sort()
   [train_psg_list, val_psg_list] = split_data(psg_sig_list,args.train_data_list,args.val_data_list)

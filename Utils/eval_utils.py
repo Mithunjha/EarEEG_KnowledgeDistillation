@@ -1,5 +1,4 @@
 import glob
-from Datasets.EarEEG_utils import split_data
 import numpy as np
 
 def get_list(args,val_data_list):
