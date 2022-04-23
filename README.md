@@ -5,6 +5,7 @@ This repository contains implementation of cross modal knowledge distillation ap
 ![cross modal distillation.png](cross_modal_distillation.png)
 
 ## Getting Started
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Mithunjha/EarEEG_KnowledgeDistillation/blob/main/EarEEG_KD_github.ipynb)
 
 ### Installation
 
