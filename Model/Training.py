@@ -17,8 +17,9 @@ def supervised_training(Net, train_data_loader,val_data_loader, criterion, optim
         run = neptune.init(project= "mithunjha/earEEG-v2-cross", api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwZjA0YTVhOC02ZGVlLTQ0NTktOWY3NS03YzFhZWUxY2M4MTcifQ==")
         parameters = {"Experiment" : "Supervised training", 
         'Loss': "Categorical Crossentropy Loss",
-        'Model Type' : "Epoch Cross-Modal Transformer",
+        'Model Type' : args.model,
         'd_model' : args.d_model,
+        'depth' : args.depth,
         'dim_feedforward' : args.dim_feedforward, 
         'window_size ':args.window_size ,
         'Batch Size': args.batch_size,
@@ -96,11 +97,12 @@ def supervised_training(Net, train_data_loader,val_data_loader, criterion, optim
 
             optimizer.zero_grad()
 
-        
-            outputs,_,_ = Net(eeg.float().to(device), eog.float().to(device), emg.float().to(device))
-        
+            if args.model == 'CMT':
+                outputs,_,_ = Net(eeg.float().to(device), eog.float().to(device), emg.float().to(device))
+            elif args.model == 'USleep':
+                outputs,_ = Net(psg.float().to(device))
+
             loss = criterion(outputs.cpu(), labels)#.to(device))
-            
             loss.backward()
             optimizer.step()
         
@@ -157,9 +159,12 @@ def supervised_training(Net, train_data_loader,val_data_loader, criterion, optim
                 val_eog = val_psg[:,:,1,:]
                 val_emg = val_psg[:,:,2,:]
                 cur_val_batch_size = len(val_eeg)
-                pred,_,_= Net(val_eeg.float().to(device), val_eog.float().to(device), val_emg.float().to(device))
 
-
+                if args.model == 'CMT':
+                    pred,_,_= Net(val_eeg.float().to(device), val_eog.float().to(device), val_emg.float().to(device))
+                if args.model == 'USleep':
+                    pred,_ = Net(val_psg.float().to(device))
+                
                 val_loss = criterion(pred.cpu(), val_labels)#.to(device))
                 val_losses.update(val_loss.data.item())
                 val_accuracy.update(accuracy(pred.cpu(), val_labels))
@@ -288,7 +293,8 @@ def KD_online_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_c
         run = neptune.init(project= "mithunjha/earEEG-v2-cross", api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwZjA0YTVhOC02ZGVlLTQ0NTktOWY3NS03YzFhZWUxY2M4MTcifQ==")
         parameters = {"Experiment" : "KD online training",
         'Loss': "Categorical Crossentropy + MSE Loss",
-        'Model Type' : "Epoch Cross-Modal Transformer",
+        'Model Type' : args.model,
+        'depth' : args.depth,
         'd_model' : args.d_model,
         'dim_feedforward' : args.dim_feedforward, 
         'window_size ':args.window_size ,
@@ -342,30 +348,25 @@ def KD_online_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_c
             sig6 = psg[:,:,5,:]# c4-o2
             cur_batch_size = len(sig1)
 
-            targets,cls_t_feat,_ = Net_t(sig4.float().to(device), sig5.float().to(device), sig6.float().to(device),finetune = True)
-            
-            
-            outputs,cls_s_feat,_ = Net_s(sig1.float().to(device), sig2.float().to(device), sig3.float().to(device),finetune = True)
+
+            if args.model == 'CMT':
+                targets,cls_t_feat,_ = Net_t(sig4.float().to(device), sig5.float().to(device), sig6.float().to(device),finetune = True)
+                outputs,cls_s_feat,_ = Net_s(sig1.float().to(device), sig2.float().to(device), sig3.float().to(device),finetune = True)
+            if args.model == 'USleep':
+                targets,cls_t_feat = Net_t(psg[:,:,3:6,:].float().to(device))
+                outputs,cls_s_feat = Net_s(psg[:,:,0:3,:].float().to(device))
 
             loss_t =  criterion_ce(targets.cpu(),labels) 
             loss_s =  criterion_ce(outputs.cpu(),labels) + criterion_mse(cls_s_feat.cpu(), cls_t_feat.detach().cpu())
 
-
-
-
-            
             optimizer_t.zero_grad()
-            
             loss_t.backward()
             optimizer_t.step()
-            # scheduler.step()
+            
             optimizer_s.zero_grad()
             loss_s.backward()
             optimizer_s.step()
-            
-            
-            
-            
+
             losses_t.update(loss_t.data.item())
             losses_s.update(loss_s.data.item())
 
@@ -417,16 +418,16 @@ def KD_online_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_c
                 val_sig3 = val_psg[:,:,2,:]
                 cur_val_batch_size = len(val_sig1)
                 
-                val_targets,cls_val_t,_ = Net_t(val_psg[:,:,3,:].float().to(device), val_psg[:,:,4,:].float().to(device), val_psg[:,:,5,:].float().to(device),finetune = True)
-                pred,cls_val_s,_ = Net_s(val_sig1.float().to(device), val_sig2.float().to(device), val_sig3.float().to(device))
-
+                if args.model == 'CMT':
+                    val_targets,cls_val_t,_ = Net_t(val_psg[:,:,3,:].float().to(device), val_psg[:,:,4,:].float().to(device), val_psg[:,:,5,:].float().to(device),finetune = True)
+                    pred,cls_val_s,_ = Net_s(val_sig1.float().to(device), val_sig2.float().to(device), val_sig3.float().to(device),finetune = True)
+                if args.model == 'USleep':
+                    val_targets,cls_val_t = Net_t(val_psg[:,:,3:6,:].float().to(device))
+                    pred,cls_val_s = Net_s(val_psg[:,:,0:3,:].float().to(device))
 
                 val_t_loss = criterion_ce(val_targets.cpu(),val_labels)
                 val_s_loss = criterion_ce(pred.cpu(),val_labels) + criterion_mse(cls_val_s.cpu(), cls_val_t.detach().cpu())
-                #soft_loss(pred.cpu(),val_targets.detach().cpu(), Temp)#
 
-
-                
                 val_t_losses.update(val_t_loss.data.item())
                 val_s_losses.update(val_s_loss.data.item())
                 val_t_accuracy.update(accuracy(val_targets.cpu(), val_labels))
@@ -498,7 +499,8 @@ def KD_offline_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_
         run = neptune.init(project= "mithunjha/earEEG-v2-cross", api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwZjA0YTVhOC02ZGVlLTQ0NTktOWY3NS03YzFhZWUxY2M4MTcifQ==")
         parameters = {"Experiment" : "KD Offline training", 
         'Loss': "Categorical Crossentropy + MSE Loss",
-        'Model Type' : "Epoch Cross-Modal Transformer",
+        'Model Type' : args.model,
+        'depth' : args.depth,
         'd_model' : args.d_model,
         'dim_feedforward' : args.dim_feedforward, 
         'window_size ':args.window_size ,
@@ -585,22 +587,23 @@ def KD_offline_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_
             
 
             with torch.no_grad():
-                targets,_,_ = Net_t(sig4.float().to(device), sig5.float().to(device), sig6.float().to(device),finetune = True)
-            
+                if args.model == 'CMT':
+                    targets,cls_t_feat,_ = Net_t(sig4.float().to(device), sig5.float().to(device), sig6.float().to(device),finetune = True)
+                if args.model == 'USleep':
+                    targets,cls_t_feat = Net_t(psg[:,:,3:6,:].float().to(device))
             optimizer_s.zero_grad()
-            outputs,_,_ = Net_s(sig1.float().to(device), sig2.float().to(device), sig3.float().to(device),finetune = True)
-            # print(outputs.shape, targets.shape)
+
+            if args.model == 'CMT':
+                outputs,cls_s_feat,_ = Net_s(sig1.float().to(device), sig2.float().to(device), sig3.float().to(device),finetune = True)
+            if args.model == 'USleep':
+                outputs,cls_s_feat = Net_s(psg[:,:,0:3,:].float().to(device))
 
             
-            loss =  criterion_ce(outputs.cpu(),labels) + criterion_mse(outputs.cpu(), targets.cpu())
+            loss =  criterion_ce(outputs.cpu(),labels) + criterion_mse(cls_s_feat,cls_t_feat.detach())
             
-            
-            # loss = loss_function(outputs.cpu(), targets.cpu(),weights)
-            
+
             loss.backward()
             optimizer_s.step()
-            # scheduler.step()
-            
             losses.update(loss.data.item())
             train_accuracy.update(accuracy(outputs.cpu(), labels))
 
@@ -655,8 +658,16 @@ def KD_offline_training(Net_s,Net_t,train_data_loader,val_data_loader,criterion_
                 val_sig2 = val_psg[:,:,1,:]
                 val_sig3 = val_psg[:,:,2,:]
                 cur_val_batch_size = len(val_sig1)
-                pred,_,_ = Net_s(val_sig1.float().to(device), val_sig2.float().to(device), val_sig3.float().to(device))
-                val_loss = criterion_ce(pred.cpu(), val_labels)#.to(device))
+
+                if args.model == 'CMT':
+                    val_targets,cls_val_t,_ = Net_t(val_psg[:,:,3,:].float().to(device), val_psg[:,:,4,:].float().to(device), val_psg[:,:,5,:].float().to(device),finetune = True)
+                    pred,cls_val_s,_ = Net_s(val_sig1.float().to(device), val_sig2.float().to(device), val_sig3.float().to(device),finetune = True)
+                if args.model == 'USleep':
+                    val_targets,cls_val_t = Net_t(val_psg[:,:,3:6,:].float().to(device))
+                    pred,cls_val_s = Net_s(val_psg[:,:,0:3,:].float().to(device))
+
+
+                val_loss = criterion_ce(pred.cpu(), val_labels) + + criterion_mse(cls_val_s,cls_val_t.detach())
                 val_losses.update(val_loss.data.item())
                 val_accuracy.update(accuracy(pred.cpu(), val_labels))
 

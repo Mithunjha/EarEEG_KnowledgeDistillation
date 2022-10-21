@@ -18,6 +18,7 @@ def parse_option():
     parser.add_argument('--val_data_list', nargs="+", default = [8] ,  help='Folds in the dataset for validation')
     parser.add_argument('--signals', type=str, default = 'ear-eeg'  ,choices=['ear-eeg', 'scalp-eeg'],  help='signal type')
     parser.add_argument('--data_path', type=str, default='',help='Path to the dataset file')
+    parser.add_argument('--model', type=str, default = 'USleep'  ,choices=['USleep', 'CMT'],  help='Model architecture')
     opt = parser.parse_args()
     return opt
 
@@ -63,8 +64,11 @@ def main():
             sig2 = psg[:,:,1,:]# L
             sig3 = psg[:,:,2,:]# R
 
-            pred,_,_ = test_model(sig1.float().to(device), sig2.float().to(device), sig3.float().to(device),finetune = True)
-
+            if args.model == 'CMT' :
+                pred,_,_ = test_model(sig1.float().to(device), sig2.float().to(device), sig3.float().to(device),finetune = True)
+            if args.model == 'USleep' :
+                pred,_ = test_model(psg[:,:,0:3,:].float().to(device))
+                
             if first == 0:
                 labels_val_main = val_labels.cpu().numpy()
                 pred_val_main = pred.cpu().numpy()

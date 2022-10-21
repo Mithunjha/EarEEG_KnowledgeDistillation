@@ -28,7 +28,7 @@ pip install -r requirements.txt
 Initially models are trained in supervised manner on scalp-EEG recordings, this pretrained models are used as teacher models in knowledge distillation training.
 
 ```python
-python main.py --data_path F:/Ear_EEG --train_data_list [0,1,2,3,5,6,7] --val_data_list [8] --signals ear-eeg --training_type supervised --is_neptune True --nep_project mithunjha/KD-v2 --nep_api eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiIwZjA0YTVhOC02ZGVlLTQ0NTktOWY3NS03YzFhZWUxY2M4MTcifQ==
+python main.py --model USleep --data_path <data path> --train_data_list [0,1,2,3,5,6,7] --val_data_list [8] --signals ear-eeg --training_type supervised --is_neptune True --nep_project <neptune project name> --nep_api <neptune API>
 ```
 
 ### Training Phase 02 - Knowledge Distillation
@@ -38,7 +38,7 @@ python main.py --data_path F:/Ear_EEG --train_data_list [0,1,2,3,5,6,7] --val_da
 In offline knowledge distillation, the pretrained supervised model is used as teacher model and student model is trained to learn the distribution of teacher model as well as the true targets.
 
 ```python
-python main.py --data_path F:/Ear_EEG --model_path F:\EarEEG_KnowledgeDistillation\results\model_check_points\checkpoint_model_epoch_best_kappa.pth.tar
+python main.py --data_path <data path> --model_path <model path>
 ```
 
 **Online Knowledge Distillation**
@@ -46,13 +46,21 @@ python main.py --data_path F:/Ear_EEG --model_path F:\EarEEG_KnowledgeDistillati
 In online knowledge distillation, both teacher and student models are trained simultaneously. 
 
 ```python
-python main.py --data_path F:/Ear_EEG --KD_type online
+python main.py --data_path <data path> --KD_type online
 ```
 
+**Transfer Learning**
+
+```python
+python main.py --data_path <data path> --is_retrain True --training_type supervised --model_path <model path>
+```
 ### Evaluation
 
 Evaluation code script can be used to evaluate the saved models.
 
 ```python
-python evaluation.py --data_path F:/Ear_EEG --model_path F:\EarEEG_KnowledgeDistillation\results\model_check_points\checkpoint_model_epoch_best_kappa.pth.tar
+python evaluation.py --data_path <data path> --model_path <model path> --n_epochs 20
 ```
+### Reference
+[1] Perslev M, Darkner S, Kempfner L, Nikolic M, Jennum PJ, Igel C.U-Sleep: resilient high-frequency sleep staging. npj Digit. Med. 4, 72 (2021).https://github.com/perslev/U-Time/blob/master/utime/models/usleep.py
+[2] Pradeepkumar, J., Anandakumar, M., Kugathasan, V., Suntharalingham, D., Kappel, S. L., De Silva, A. C., & Edussooriya, C. U. Towards Interpretable Sleep Stage Classification Using Cross-Modal Transformers. arXiv preprint arXiv:2208.06991 (2022). https://github.com/Jathurshan0330/Cross-Modal-Transformer

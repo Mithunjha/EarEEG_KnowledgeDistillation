@@ -6,6 +6,7 @@ import os
         
 from Datasets.Dataset_loader import get_dataset
 from Model.CrossModalTransformer import Cross_Transformer_Network
+from Model.USleep import USleep, _EncoderBlock, _DecoderBlock
 from Model.Training import supervised_training,KD_online_training,KD_offline_training
 
 def parse_option():
@@ -21,14 +22,14 @@ def parse_option():
     parser.add_argument('--model_path', type=str, default="",   help='Path to saved checkpoint for retraining')
     parser.add_argument('--student_model_path', type=str, default="",   help='Path to saved checkpoint for student initialization')
     parser.add_argument('--signals', type=str, default = 'ear-eeg'  ,choices=['ear-eeg', 'scalp-eeg'],  help='signal type')
-
+    parser.add_argument('--model', type=str, default = 'USleep'  ,choices=['USleep', 'CMT'],  help='Model architecture')
     #model parameters
     parser.add_argument('--training_type', type=str, default = 'Knowledge_distillation'  ,choices=['supervised', 'Knowledge_distillation'],  help='training type')
-    parser.add_argument('--KD_type', type=str, default = 'offline'  ,choices=['offline', 'online'],  help='Knowledge distillation type')
+    parser.add_argument('--KD_type', type=str, default = 'online'  ,choices=['offline', 'online'],  help='Knowledge distillation type')
     parser.add_argument('--d_model', type=int, default = 256,  help='Embedding size of the CMT')
     parser.add_argument('--dim_feedforward', type=int, default = 1024,  help='No of neurons feed forward block')
     parser.add_argument('--window_size', type=int, default = 50,  help='Size of non-overlapping window')
-    
+    parser.add_argument('--depth', type=int, default = 12,  help='depth of USleep model')
     #training parameters
     parser.add_argument('--batch_size', type=int, default = 32 ,  help='Batch Size')
     
@@ -55,6 +56,9 @@ def parse_option():
 def main():
     args = parse_option()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    cuda = torch.cuda.is_available()
+    if cuda:
+        torch.backends.cudnn.benchmark = True
     print(device)
     print("<=============== Training arguments ===============>")
     for arg in vars(args):
@@ -79,13 +83,16 @@ def main():
             Net = torch.load(f"{args.model_path}").to(device)
         else:
             print(f"Initializing Epoch cross modal transformer")
-            Net = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward = args.dim_feedforward,window_size = args.window_size ).to(device)
-
+            if args.model == 'CMT':
+                Net = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward = args.dim_feedforward,window_size = args.window_size ).to(device)
+            elif args.model == 'USleep':
+                Net = USleep(in_chans=3,sfreq=200,depth=args.depth,with_skip_connection=True,n_classes=5,input_size_s=30,time_conv_size_s = 9/200,apply_softmax=False).to(device)
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.Adam(Net.parameters(), lr=args.lr, betas=(args.beta_1, args.beta_2),eps = args.eps, weight_decay = args.weight_decay)
 
         supervised_training(Net, train_data_loader,val_data_loader, criterion, optimizer, args, device)
 
+ 
     if args.training_type == 'Knowledge_distillation':
         if args.KD_type == 'offline':
             print(f"Loading previous model from {args.model_path} for teacher model")
@@ -95,7 +102,11 @@ def main():
                 Net_s = torch.load(f"{args.student_model_path}").to(device)
             else:
                 print(f"Initializing student model")
-                Net_s = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward=args.dim_feedforward, window_size = args.window_size).to(device)
+                if args.model == 'CMT':
+                    Net_s = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward = args.dim_feedforward,window_size = args.window_size ).to(device)
+                elif args.model == 'USleep':
+                    Net_s = USleep(in_chans=3,sfreq=200,depth=args.depth,with_skip_connection=True,n_classes=5,input_size_s=30,time_conv_size_s = 9/200,apply_softmax=False).to(device)
+
             criterion_mse =  nn.MSELoss()
             criterion_ce = nn.CrossEntropyLoss()
             optimizer_s = torch.optim.Adam(Net_s.parameters(), lr=args.lr, betas=(args.beta_1, args.beta_2),eps = args.eps)
@@ -105,18 +116,26 @@ def main():
             if args.is_student_pretrain:
                 print(f"Loading previous model from {args.student_model_path} for student model")
                 Net_s = torch.load(f"{args.student_model_path}").to(device)
+                
             else:
                 print(f"Initializing student model")
-                Net_s = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward=args.dim_feedforward, window_size = args.window_size).to(device)
-
+                if args.model == 'CMT':
+                    Net_s = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward = args.dim_feedforward,window_size = args.window_size).to(device)
+                elif args.model == 'USleep':
+                    Net_s = USleep(in_chans=3,sfreq=200,depth=args.depth,with_skip_connection=True,n_classes=5,input_size_s=30,time_conv_size_s = 9/200,apply_softmax=False).to(device)
+                    print(Net_s)
 
             if args.is_teacher_pretrain:
                 print(f"Loading previous model from {args.model_path} for teacher model")
-                Net_s = torch.load(f"{args.model_path}").to(device)
+                Net_t = torch.load(f"{args.model_path}").to(device)
             else:
                 print(f"Initializing teacher model")
-                Net_t = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward=args.dim_feedforward, window_size = args.window_size).to(device)
+                if args.model == 'CMT':
+                    Net_t = Cross_Transformer_Network(d_model = args.d_model, dim_feedforward = args.dim_feedforward,window_size = args.window_size ).to(device)
+                elif args.model == 'USleep':
+                    Net_t = USleep(in_chans=3,sfreq=200,depth=args.depth,with_skip_connection=True,n_classes=5,input_size_s=30,time_conv_size_s = 9/200,apply_softmax=False).to(device)
 
+            
             criterion_mse =  nn.MSELoss()
             criterion_ce = nn.CrossEntropyLoss()
             optimizer_s = torch.optim.Adam(Net_s.parameters(), lr=args.lr, betas=(args.beta_1, args.beta_2),eps = args.eps)
