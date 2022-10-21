@@ -63,4 +63,5 @@ python evaluation.py --data_path <data path> --model_path <model path> --n_epoch
 ```
 ### Reference
 [1] Perslev M, Darkner S, Kempfner L, Nikolic M, Jennum PJ, Igel C.U-Sleep: resilient high-frequency sleep staging. npj Digit. Med. 4, 72 (2021).https://github.com/perslev/U-Time/blob/master/utime/models/usleep.py
+
 [2] Pradeepkumar, J., Anandakumar, M., Kugathasan, V., Suntharalingham, D., Kappel, S. L., De Silva, A. C., & Edussooriya, C. U. Towards Interpretable Sleep Stage Classification Using Cross-Modal Transformers. arXiv preprint arXiv:2208.06991 (2022). https://github.com/Jathurshan0330/Cross-Modal-Transformer
