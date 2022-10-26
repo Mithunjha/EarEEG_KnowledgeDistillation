@@ -1,4 +1,4 @@
-# EEG Assisted Enhanced Sleep Staging with Ear-EEG using Cross-Modal Knowledge Distillation
+# A KNOWLEDGE DISTILLATION FRAMEWORK FOR ENHANCING EAR-EEG BASED SLEEP STAGING WITH SCALP-EEG DATA
 
 This repository contains implementation of cross-modal knowledge distillation approach combining response based distillation to enhance ear-EEG based sleep staging using the scalp-EEG.
 
