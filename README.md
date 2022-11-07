@@ -1,5 +1,19 @@
 # A KNOWLEDGE DISTILLATION FRAMEWORK FOR ENHANCING EAR-EEG BASED SLEEP STAGING WITH SCALP-EEG DATA
 
+## Citation
+If you find our work or this repository useful, please consider giving a star ⭐ and citation.
+
+```
+@misc{KDforearEEG,
+      title={A Knowledge Distillation Framework For Enhancing Ear-EEG Based Sleep Staging With Scalp-EEG Data}, 
+      author={Mithunjha Anandakumar and Jathurshan Pradeepkumar and Simon L. Kappel and Chamira U. S. Edussooriya and Anjula C. De Silva},
+      year={2022},
+      eprint={2211.02638},
+      archivePrefix={arXiv},
+      primaryClass={eess.SP}
+}
+```
+
 This repository contains implementation of cross-modal knowledge distillation approach combining response based distillation to enhance ear-EEG based sleep staging using the scalp-EEG.
 
 ![cross modal distillation.png](cross_modal_distillation.png)
